@@ -9,9 +9,9 @@ def param_num(state):
         nn = 1
         for s in sz:
             nn *= s
-        print('{}: {}    {}'.format(key, sz, nn))
+        print(f'{key}: {sz}    {nn}')
         num += nn
-    print('total num: {}'.format(num))
+    print(f'total num: {num}')
 
 
 if __name__ == "__main__":

@@ -48,22 +48,22 @@ def save_state(state, path, epoch, is_last=False):
     assert path != ''
     if not os.path.isdir(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
-    torch.save(state, '{}_{}.pth.tar'.format(path, epoch))
+    torch.save(state, f'{path}_{epoch}.pth.tar')
     # if is_last:
     #     os.system('cp {}_{}.pth.tar {}_last.pth.tar'.format(path, epoch, path))
 
 
 def load_state(path, model, optimizer=None):
     if os.path.isfile(path):
-        log("=> loading checkpoint '{}'".format(path))
+        log(f"=> loading checkpoint '{path}'")
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['state_dict'], strict=False)
-        log("=> loaded checkpoint '{}' (epoch {} iteration {})".format(path, checkpoint['epoch'], checkpoint['count']))
+        log(f"=> loaded checkpoint '{path}' (epoch {checkpoint['epoch']} iteration {checkpoint['count']})")
         if optimizer is not None:
             optimizer.load_state_dict(checkpoint['optimizer'])
             return checkpoint
     else:
-        log("=> no checkpoint found at '{}'".format(path))
+        log(f"=> no checkpoint found at '{path}'")
 
 
 def log(string):

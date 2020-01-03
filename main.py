@@ -62,50 +62,55 @@ def main():
             setattr(args, k, v)
     args.ngpu = len(args.gpus.split(','))
 
-    ## asserts
-    assert args.model.backbone in model_names, "available backbone names: {}".format(model_names)
+    # asserts
+    assert args.model.backbone in model_names, f"available backbone names: {model_names}"
     num_tasks = len(args.train.data_root)
     assert(num_tasks == len(args.train.loss_weight))
     assert(num_tasks == len(args.train.batch_size))
     assert(num_tasks == len(args.train.data_list))
-    #assert(num_tasks == len(args.train.data_meta))
+    # assert(num_tasks == len(args.train.data_meta))
     if args.val.flag:
         assert(num_tasks == len(args.val.batch_size))
         assert(num_tasks == len(args.val.data_root))
         assert(num_tasks == len(args.val.data_list))
-        #assert(num_tasks == len(args.val.data_meta))
+        # assert(num_tasks == len(args.val.data_meta))
 
-    ## mkdir
+    # mkdir
     if not hasattr(args, 'save_path'):
         args.save_path = os.path.dirname(args.config)
-    if not os.path.isdir('{}/checkpoints'.format(args.save_path)):
-        os.makedirs('{}/checkpoints'.format(args.save_path))
-    if not os.path.isdir('{}/logs'.format(args.save_path)):
-        os.makedirs('{}/logs'.format(args.save_path))
-    if not os.path.isdir('{}/events'.format(args.save_path)):
-        os.makedirs('{}/events'.format(args.save_path))
 
-    ## create dataset
-    if not (args.extract or args.evaluate): # train + val
+    for _s_dir in ['checkpoints', 'logs', 'events']:
+        __tmp_dir = f'{args.save_path}/{_s_dir}'
+        if not os.path.isdir(__tmp_dir):
+            os.makedirs(__tmp_dir)
+
+    # create dataset
+    if not (args.extract or args.evaluate):    # train + val
         for i in range(num_tasks):
             args.train.batch_size[i] *= args.ngpu
 
-        #train_dataset = [FaceDataset(args, idx, 'train') for idx in range(num_tasks)]
+        # train_dataset = [FaceDataset(args, idx, 'train') for idx in range(num_tasks)]
         train_dataset = [FileListLabeledDataset(
             args.train.data_list[i], args.train.data_root[i],
             transforms.Compose([
                 transforms.RandomHorizontalFlip(),
                 transforms.Resize(args.model.input_size),
                 transforms.ToTensor(),
-                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),]),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]), ]),
             memcached=args.memcached,
             memcached_client=args.memcached_client) for i in range(num_tasks)]
         args.num_classes = [td.num_class for td in train_dataset]
         train_longest_size = max([int(np.ceil(len(td) / float(bs))) for td, bs in zip(train_dataset, args.train.batch_size)])
-        train_sampler = [GivenSizeSampler(td, total_size=train_longest_size * bs, rand_seed=args.train.rand_seed) for td, bs in zip(train_dataset, args.train.batch_size)]
-        train_loader = [DataLoader(
-            train_dataset[k], batch_size=args.train.batch_size[k], shuffle=False,
-            num_workers=args.workers, pin_memory=False, sampler=train_sampler[k]) for k in range(num_tasks)]
+        train_sampler = [
+                            GivenSizeSampler(td, total_size=train_longest_size * bs, rand_seed=args.train.rand_seed)
+                            for td, bs in zip(train_dataset, args.train.batch_size)
+                    ]
+        train_loader = [
+                            DataLoader(
+                                train_dataset[k], batch_size=args.train.batch_size[k], shuffle=False,
+                                num_workers=args.workers, pin_memory=False, sampler=train_sampler[k]
+                            ) for k in range(num_tasks)
+                        ]
         assert(all([len(train_loader[k]) == len(train_loader[0]) for k in range(num_tasks)]))
 
         if args.val.flag:
@@ -146,7 +151,7 @@ def main():
             else:
                 test_dataset.append(
                         BinDataset(
-                                "{}/{}.bin".format(args.test.test_root, tb),
+                                f"{args.test.test_root}/{tb}.bin",
                                 transforms.Compose([
                                     transforms.Resize(args.model.input_size),
                                     transforms.ToTensor(),
@@ -165,7 +170,7 @@ def main():
             num_workers=args.workers, pin_memory=False, sampler=ts)
             for td, ts in zip(test_dataset, test_sampler)]
 
-    if args.extract:    # feature extraction
+    if args.extract:            # feature extraction
         args.extract_info.batch_size *= args.ngpu
         # extract_dataset = FaceDataset(args, 0, 'extract')
         extract_dataset = FileListDataset(
@@ -173,7 +178,7 @@ def main():
             transforms.Compose([
                 transforms.Resize(args.model.input_size),
                 transforms.ToTensor(),
-                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),]),
+                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]), ]),
             memcached=args.memcached,
             memcached_client=args.memcached_client)
         extract_sampler = GivenSizeSampler(
@@ -183,7 +188,7 @@ def main():
             num_workers=args.workers, pin_memory=False, sampler=extract_sampler)
 
     # create model
-    log("Creating model on [{}] gpus: {}".format(args.ngpu, args.gpus))
+    log(f"Creating model on [{args.ngpu}] gpus: {args.gpus}")
     if args.evaluate or args.extract:
         args.num_classes = None
     model = models.MultiTaskWithLoss(backbone=args.model.backbone, num_classes=args.num_classes, feature_dim=args.model.feature_dim, spatial_size=args.model.input_size, arc_fc=args.model.arc_fc, feat_bn=args.model.feat_bn)
@@ -201,7 +206,7 @@ def main():
     start_epoch = 0
     count = [0]
     if args.load_path:
-        assert os.path.isfile(args.load_path), "File not exist: {}".format(args.load_path)
+        assert os.path.isfile(args.load_path), f"File not exist: {args.load_path}"
         if args.resume:
             checkpoint = load_state(args.load_path, model, optimizer)
             start_epoch = checkpoint['epoch']
@@ -213,13 +218,13 @@ def main():
     if args.evaluate:
         for tb, tl, td in zip(args.test.benchmark, test_loader, test_dataset):
             evaluation(tl, model, num=len(td),
-                       outfeat_fn="{}_{}.bin".format(args.load_path[:-8], tb),
+                       outfeat_fn=f"{args.load_path[:-8]}_{tb}.bin",
                        benchmark=tb)
         return
 
     # feature extraction
     if args.extract:
-        extract(extract_loader, model, num=len(extract_dataset), output_file="{}_{}.bin".format(args.load_path[:-8], args.extract_info.data_name))
+        extract(extract_loader, model, num=len(extract_dataset), output_file=f"{args.load_path[:-8]}_{args.extract_info.data_name}.bin")
         return
 
     ######################## train #################
@@ -227,11 +232,11 @@ def main():
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, args.train.lr_decay_steps, gamma=args.train.lr_decay_scale, last_epoch=start_epoch-1)
 
     # logger
-    logging.basicConfig(filename=os.path.join('{}/logs'.format(args.save_path), 'log-{}-{:02d}-{:02d}_{:02d}:{:02d}:{:02d}.txt'.format(
+    logging.basicConfig(filename=os.path.join(f'{args.save_path}/logs', 'log-{}-{:02d}-{:02d}_{:02d}:{:02d}:{:02d}.txt'.format(
         datetime.today().year, datetime.today().month, datetime.today().day,
         datetime.today().hour, datetime.today().minute, datetime.today().second)),
         level=logging.INFO)
-    tb_logger = SummaryWriter('{}/events'.format(args.save_path))
+    tb_logger = SummaryWriter(f'{args.save_path}/events')
 
     # initial validate
     if args.val.flag:
@@ -239,11 +244,10 @@ def main():
 
     # initial evaluate
     if args.test.flag and args.test.initial_test:
-        log("*************** evaluation epoch [{}] ***************".format(start_epoch))
+        log(f"*************** evaluation epoch [{start_epoch}] ***************")
         for tb, tl, td in zip(args.test.benchmark, test_loader, test_dataset):
             res = evaluation(tl, model, num=len(td),
-                             outfeat_fn="{}/checkpoints/ckpt_epoch_{}_{}.bin".format(
-                             args.save_path, start_epoch, tb),
+                             outfeat_fn=f"{args.save_path}/checkpoints/ckpt_epoch_{start_epoch}_{tb}.bin",
                              benchmark=tb)
             tb_logger.add_scalar(tb, res, start_epoch)
 
@@ -268,11 +272,10 @@ def main():
             validate(val_loader, model, epoch, args.train.loss_weight, len(train_loader[0]), tb_logger, count)
         # online evaluate
         if args.test.flag and ((epoch + 1) % args.test.interval == 0 or epoch + 1 == args.train.max_epoch):
-            log("*************** evaluation epoch [{}] ***************".format(epoch + 1))
+            log(f"*************** evaluation epoch [{epoch + 1}] ***************")
             for tb, tl, td in zip(args.test.benchmark, test_loader, test_dataset):
                 res = evaluation(tl, model, num=len(td),
-                                 outfeat_fn="{}/checkpoints/ckpt_epoch_{}_{}.bin".format(
-                                 args.save_path, epoch + 1, tb),
+                                 outfeat_fn=f"{args.save_path}/checkpoints/ckpt_epoch_{epoch + 1}_{tb}.bin",
                                  benchmark=tb)
                 tb_logger.add_scalar(tb, res, start_epoch)
 
@@ -300,8 +303,8 @@ def train(train_loader, model, optimizer, epoch, loss_weight, tb_logger, count):
         for ng in range(args.ngpu):
             for t in range(len(input)):
                 bs = args.train.batch_size[t] // args.ngpu
-                organized_input.append(input[t][ng * bs : (ng + 1) * bs, ...])
-                organized_target.append(target[t][ng * bs : (ng + 1) * bs, ...])
+                organized_input.append(input[t][ng * bs: (ng + 1) * bs, ...])
+                organized_target.append(target[t][ng * bs: (ng + 1) * bs, ...])
         input = torch.cat(organized_input, dim=0)
         target = torch.cat(organized_target, dim=0)
 
@@ -332,13 +335,13 @@ def train(train_loader, model, optimizer, epoch, loss_weight, tb_logger, count):
         # info
         if i % args.train.print_freq == 0:
             log('Progress: [{0}][{1}/{2}][{3}]    '
-                  'Lr: {4:.2g}    '
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})    '
-                  'Data {data_time.val:.3f} ({data_time.avg:.3f})'.format(
-                   epoch, i, len(train_loader[0]), count[0],
-                   optimizer.param_groups[0]['lr'],
-                   batch_time=batch_time,
-                   data_time=data_time))
+                'Lr: {4:.2g}    '
+                'Time {batch_time.val:.3f} ({batch_time.avg:.3f})    '
+                'Data {data_time.val:.3f} ({data_time.avg:.3f})'.format(
+                    epoch, i, len(train_loader[0]), count[0],
+                    optimizer.param_groups[0]['lr'],
+                    batch_time=batch_time,
+                    data_time=data_time))
             for k in range(num_tasks):
                 log('Task: #{0}\t'
                     'LW: {1:.2g}\t'
@@ -346,7 +349,7 @@ def train(train_loader, model, optimizer, epoch, loss_weight, tb_logger, count):
 
         # tensorboard logger
         for k in range(num_tasks):
-            tb_logger.add_scalar('train_loss_{}'.format(k), losses[k].val, count[0])
+            tb_logger.add_scalar(f'train_loss_{k}', losses[k].val, count[0])
         tb_logger.add_scalar('lr', optimizer.param_groups[0]['lr'], count[0])
 
         count[0] += 1
@@ -382,12 +385,12 @@ def validate(val_loader, model, criterion, epoch, loss_weight, train_len, tb_log
         for k in range(num_tasks):
             losses[k].update(loss[k].data[0])
 
-    log('Test epoch #{}    Time {}'.format(epoch, time.time() - start))
+    log(f'Test epoch #{epoch}    Time {time.time() - start}')
     for k in range(num_tasks):
         log(' * Task: #{0}    Loss {loss.avg:.4f}'.format(k, loss=losses[k]))
 
     for k in range(num_tasks):
-        tb_logger.add_scalar('val_loss_{}'.format(k), losses[k].val, count[0])
+        tb_logger.add_scalar(f'val_loss_{k}', losses[k].val, count[0])
 
 
 def extract(ext_loader, model, num, output_file, silent=False):
@@ -414,7 +417,7 @@ def extract(ext_loader, model, num, output_file, silent=False):
     features = np.concatenate(features, axis=0)[:num, :]
     features.tofile(output_file)
     if not silent:
-        log("Extracting Done. Total time: {}".format(time.time() - start))
+        log(f"Extracting Done. Total time: {time.time() - start}")
     return features
 
 
@@ -423,16 +426,16 @@ def evaluation(test_loader, model, num, outfeat_fn, benchmark):
     if not os.path.isfile(outfeat_fn) or not load_feat:
         features = extract(test_loader, model, num, outfeat_fn, silent=True)
     else:
-        print("loading from: {}".format(outfeat_fn))
+        print(f"loading from: {outfeat_fn}")
         features = np.fromfile(outfeat_fn, dtype=np.float32).reshape(-1, args.model.feature_dim)
 
     if benchmark == "megaface":
         r = test_megaface(features)
-        log(' * Megaface: 1e-6 [{}], 1e-5 [{}], 1e-4 [{}]'.format(r[-1], r[-2], r[-3]))
+        log(f' * Megaface: 1e-6 [{r[-1]}], 1e-5 [{r[-2]}], 1e-4 [{r[-3]}]')
         return r[-1]
     else:
         features = normalize(features)
-        _, lbs = bin_loader("{}/{}.bin".format(args.test.test_root, benchmark))
+        _, lbs = bin_loader(f"{args.test.test_root}/{benchmark}.bin")
         _, _, acc, val, val_std, far = evaluate(
             features, lbs, nrof_folds=args.test.nfolds, distance_metric=0)
 

@@ -37,8 +37,7 @@ class ArcFullyConnected(Module):
         self.weight.data.uniform_(-stdv, stdv)
 
     def __repr__(self):
-        return ('in_features={}, out_features={}, s={}, m={}'
-                .format(self.in_features, self.out_features, self.s, self.m))
+        return (f'in_features={self.in_features}, out_features={self.out_features}, s={self.s}, m={self.m}')
 
     def forward(self, embed, label):
         n_weight = F.normalize(self.weight, p=2, dim=1)

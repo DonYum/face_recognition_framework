@@ -39,16 +39,16 @@ for beg in range(0, n, sub_n):
     c = 0
     this_list = []
     this_meta = []
-    print('generating split {} ({}:{})...'.format(i, beg, end))
+    print(f'generating split {i} ({beg}:{end})...')
     for k in keys[beg:end]:
         this_list.extend(d[k])
-        this_meta.extend(['{}\n'.format(c)]*len(d[k]))
+        this_meta.extend([f'{c}\n']*len(d[k]))
         c += 1
     print('writing list...')
-    with open('{}_list_{}.txt'.format(out_prefix, i), 'w') as f:
+    with open(f'{out_prefix}_list_{i}.txt', 'w') as f:
         f.writelines(this_list)
     print('writing meta...')
-    with open('{}_meta_{}.txt'.format(out_prefix, i), 'w') as f:
-        f.write('{} {}\n'.format(len(this_list), c))
+    with open(f'{out_prefix}_meta_{i}.txt', 'w') as f:
+        f.write(f'{len(this_list)} {c}\n')
         f.writelines(this_meta)
     i += 1

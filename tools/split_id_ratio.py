@@ -49,23 +49,24 @@ if __name__ == "__main__":
         split_mapping = dict(zip(split_id, range(split_num)))
         split_idx = find_idx(split_id, d)
         split_lines = [lines[i] for i in split_idx]
-        split_labels_new = ['{}\n'.format(split_mapping[cls[i]]) for i in split_idx]
-        with open(output_prefix + '{}_list.txt'.format(ii), 'w') as f:
+        split_labels_new = [f'{split_mapping[cls[i]]}\n' for i in split_idx]
+        with open(output_prefix + f'{ii}_list.txt', 'w') as f:
             f.writelines(split_lines)
-        with open(output_prefix + "{}_meta.txt".format(ii), 'w') as f:
-            f.write('{} {}\n'.format(len(split_labels_new), len(split_id)))
+        with open(output_prefix + f"{ii}_meta.txt", 'w') as f:
+            f.write(f'{len(split_labels_new)} {len(split_id)}\n')
             f.writelines(split_labels_new)
 
     remain_id = sorted(keys[offset:])
     remain_mapping = dict(zip(remain_id, range(len(remain_id))))
     remain_idx = find_idx(remain_id, d)
     remain_lines = [lines[i] for i in remain_idx]
-    remain_labels_new = ['{}\n'.format(remain_mapping[cls[i]]) for i in remain_idx]
-    with open(output_prefix + '{}_list.txt'.format(len(split)), 'w') as f:
+    remain_labels_new = [f'{remain_mapping[cls[i]]}\n' for i in remain_idx]
+    with open(output_prefix + f'{len(split)}_list.txt', 'w') as f:
         f.writelines(remain_lines)
-    with open(output_prefix + '{}_meta.txt'.format(len(split)), 'w') as f:
-        f.write('{} {}\n'.format(len(remain_labels_new), len(remain_id)))
+    with open(output_prefix + f'{len(split)}_meta.txt', 'w') as f:
+        f.write(f'{len(remain_labels_new)} {len(remain_id)}\n')
         f.writelines(remain_labels_new)
+
     # check
     # if True:
     #     num_images = []

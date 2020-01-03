@@ -14,6 +14,7 @@ from utils import bin_loader
 
 import pdb
 
+
 def pil_loader(img_str):
     buff = io.BytesIO(img_str)
     with Image.open(buff) as img:
@@ -26,7 +27,7 @@ def pil_loader(img_str):
 #        self.config = config
 #        assert phase in ['train', 'val', 'test', 'extract']
 #        self.phase = phase
-#        
+
 #        if phase in ['train', 'val']:
 #            print("Building task #{} dataset from {} and {}".format(task_idx, config.train.data_list[task_idx], config.train.data_meta[task_idx]))
 #            with open(config.train.data_list[task_idx], 'r') as f:
@@ -61,10 +62,10 @@ def pil_loader(img_str):
 #        normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.3125, 0.3125, 0.3125])
 #        self.transforms = transforms.Compose([transforms.ToTensor(), normalize])
 #        self.initialized = False
-# 
+#
 #    def __len__(self):
 #        return self.num_img
-# 
+#
 #    def __init_memcached(self):
 #        if not self.initialized:
 #            server_list_config_file = "{}/server_list.conf".format(self.config.memcached_client)
@@ -90,7 +91,7 @@ def pil_loader(img_str):
 #            return self._read_one()
 #        else:
 #            return img, label
-#            
+#
 #    def __getitem__(self, idx):
 #        self.__init_memcached()
 #        ## memcached
@@ -145,6 +146,7 @@ def pil_loader(img_str):
 #        img = self.transforms(img)
 #        return img, label
 
+
 class GivenSizeSampler(Sampler):
     '''
     Sampler with given total size
@@ -170,14 +172,14 @@ class GivenSizeSampler(Sampler):
         # add extra samples to meet self.total_size
         extra = self.total_size - len(origin_indices)
         if not self.silent:
-            print('Origin Size: {}\tAligned Size: {}'.format(len(origin_indices), self.total_size))
+            print(f'Origin Size: {len(origin_indices)}\tAligned Size: {self.total_size}')
         if extra < 0:
             indices = indices[:self.total_size]
         while extra > 0:
             intake = min(len(origin_indices), extra)
             indices += origin_indices[:intake]
             extra -= intake
-        assert len(indices) == self.total_size, "{} vs {}".format(len(indices), self.total_size)
+        assert len(indices) == self.total_size, f"{len(indices)} vs {self.total_size}"
 
         return iter(indices)
 
@@ -198,13 +200,13 @@ class BinDataset(Dataset):
         return self.num
 
     def _read(self, idx=None):
-        if idx == None:
+        if idx is None:
             idx = np.random.randint(self.num)
         try:
             img = self.img_lst[idx]
             return img
         except Exception as err:
-            print('Read image[{}] failed ({})'.format(idx, err))
+            print(f'Read image[{idx}] failed ({err})')
             return self._read()
 
     def __getitem__(self, idx):
@@ -225,6 +227,7 @@ def build_labeled_dataset(filelist, prefix):
             lb_lst.append(lb)
     assert len(img_lst) == len(lb_lst)
     return img_lst, lb_lst
+
 
 def build_unlabeled_dataset(filelist, prefix):
     img_lst = []
@@ -249,8 +252,8 @@ class FileListLabeledDataset(Dataset):
 
     def __init_memcached(self):
         if not self.initialized:
-            server_list_config_file = "{}/server_list.conf".format(self.memcached_client)
-            client_config_file = "{}/client.conf".format(self.memcached_client)
+            server_list_config_file = f"{self.memcached_client}/server_list.conf"
+            client_config_file = f"{self.memcached_client}/client.conf"
             self.mclient = mc.MemcachedClient.GetInstance(server_list_config_file, client_config_file)
             self.initialized = True
 
@@ -269,7 +272,7 @@ class FileListLabeledDataset(Dataset):
                 img = pil_loader(open(fn, 'rb').read())
             return img, lb
         except Exception as err:
-            print('Read image[{}, {}] failed ({})'.format(idx, fn, err))
+            print(f'Read image[{idx}, {fn}] failed ({err})')
             return self._read()
 
     def __getitem__(self, idx):
@@ -279,6 +282,7 @@ class FileListLabeledDataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img, lb
+
 
 class FileListDataset(Dataset):
     def __init__(self, filelist, prefix, transform=None, memcached=False, memcached_client=''):
@@ -294,8 +298,8 @@ class FileListDataset(Dataset):
 
     def __init_memcached(self):
         if not self.initialized:
-            server_list_config_file = "{}/server_list.conf".format(self.memcached_client)
-            client_config_file = "{}/client.conf".format(self.memcached_client)
+            server_list_config_file = f"{self.memcached_client}/server_list.conf"
+            client_config_file = f"{self.memcached_client}/client.conf"
             self.mclient = mc.MemcachedClient.GetInstance(server_list_config_file, client_config_file)
             self.initialized = True
 
@@ -314,7 +318,7 @@ class FileListDataset(Dataset):
                 img = pil_loader(open(fn, 'rb').read())
             return img
         except Exception as err:
-            print('Read image[{}, {}] failed ({})'.format(idx, fn, err))
+            print(f'Read image[{idx}, {fn}] failed ({err})')
             return self._read()
 
     def __getitem__(self, idx):
