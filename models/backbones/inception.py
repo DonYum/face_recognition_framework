@@ -130,7 +130,7 @@ class Inception3(nn.Module):
 
         # face
         x = self.layer1x1(x)
-        #x = F.avg_pool2d(x, kernel_size=5)
+        # x = F.avg_pool2d(x, kernel_size=5)
         x = self.drop1(x)
         x = x.view(x.size(0), -1)
         x = self.feature(x)

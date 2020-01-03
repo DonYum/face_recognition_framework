@@ -11,9 +11,11 @@ import numpy as np
 import random
 import math
 
+
 def where(cond, x_1, x_2):
     cond = cond.float()
     return (cond * x_1) + ((1-cond) * x_2)
+
 
 class ArcFullyConnected(Module):
 
@@ -26,7 +28,7 @@ class ArcFullyConnected(Module):
         self.is_pw = is_pw
         self.is_hard = is_hard
         assert s > 0
-        assert 0 <= m < 0.5* math.pi
+        assert 0 <= m < 0.5 * math.pi
         self.weight = Parameter(torch.Tensor(out_features, in_features))
         self.reset_parameters()
 
@@ -50,10 +52,9 @@ class ArcFullyConnected(Module):
             if not self.is_hard:
                 arc_score = where(score > 0, arc_score, score)
             else:
-                mm = math.sin(math.pi - self.m)*self.m # actually it is sin(m)*m
-                th = math.cos(math.pi - self.m) # actually it is -cos(m)
+                mm = math.sin(math.pi - self.m)*self.m      # actually it is sin(m)*m
+                th = math.cos(math.pi - self.m)             # actually it is -cos(m)
                 arc_score = where((score-th) > 0, arc_score, score-self.s*mm)
         one_hot = Variable(torch.cuda.FloatTensor(out.shape).fill_(0))
         out += (arc_score - score) * one_hot.scatter_(1, label.view(-1, 1), 1)
         return out
-

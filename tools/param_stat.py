@@ -1,6 +1,7 @@
 import torch
 import sys
 
+
 def param_num(state):
     num = 0
     for key in state.keys():
@@ -11,6 +12,7 @@ def param_num(state):
         print('{}: {}    {}'.format(key, sz, nn))
         num += nn
     print('total num: {}'.format(num))
+
 
 if __name__ == "__main__":
     fn = sys.argv[1]

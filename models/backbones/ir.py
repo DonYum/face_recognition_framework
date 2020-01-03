@@ -7,16 +7,17 @@ import sys
 
 __all__ = ['InceptionResNetV2', 'inceptionresnetv2', 'inceptionresnetv2_avgpool']
 
+
 class BasicConv2d(nn.Module):
 
     def __init__(self, in_planes, out_planes, kernel_size, stride, padding=0):
         super(BasicConv2d, self).__init__()
         self.conv = nn.Conv2d(in_planes, out_planes,
                               kernel_size=kernel_size, stride=stride,
-                              padding=padding, bias=False) # verify bias false
+                              padding=padding, bias=False)  # verify bias false
         self.bn = nn.BatchNorm2d(out_planes,
-                                 eps=0.001, # value found in tensorflow
-                                 momentum=0.1, # default pytorch value
+                                 eps=0.001,                 # value found in tensorflow
+                                 momentum=0.1,              # default pytorch value
                                  affine=True)
         self.relu = nn.ReLU(inplace=False)
 
@@ -28,7 +29,6 @@ class BasicConv2d(nn.Module):
 
 
 class Mixed_5b(nn.Module):
-
     def __init__(self):
         super(Mixed_5b, self).__init__()
 
@@ -37,7 +37,7 @@ class Mixed_5b(nn.Module):
         self.branch1 = nn.Sequential(
             BasicConv2d(192, 48, kernel_size=1, stride=1),
             BasicConv2d(48, 64, kernel_size=5, stride=1, padding=2)
-        ) 
+        )
 
         self.branch2 = nn.Sequential(
             BasicConv2d(192, 64, kernel_size=1, stride=1),
@@ -97,7 +97,7 @@ class Mixed_6a(nn.Module):
 
     def __init__(self):
         super(Mixed_6a, self).__init__()
-        
+
         self.branch0 = BasicConv2d(320, 384, kernel_size=3, stride=2)
 
         self.branch1 = nn.Sequential(
@@ -148,7 +148,7 @@ class Mixed_7a(nn.Module):
 
     def __init__(self):
         super(Mixed_7a, self).__init__()
-        
+
         self.branch0 = nn.Sequential(
             BasicConv2d(1088, 256, kernel_size=1, stride=1),
             BasicConv2d(256, 384, kernel_size=3, stride=2)
@@ -322,9 +322,11 @@ class InceptionResNetV2(nn.Module):
         x = self.up_to_feature(input)
         return x
 
+
 def inceptionresnetv2_avgpool(**kwargs):
     model = InceptionResNetV2(avgpool=True, **kwargs)
     return model
+
 
 def inceptionresnetv2(**kwargs):
     model = InceptionResNetV2(avgpool=False, **kwargs)

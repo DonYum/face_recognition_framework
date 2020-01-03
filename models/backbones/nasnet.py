@@ -7,8 +7,8 @@ from torch.autograd import Variable
 
 __all__ = ['NASNetALarge', 'NASNetASmall', 'nasnetalarge', 'nasnetasmall']
 
-class MaxPoolPad(nn.Module):
 
+class MaxPoolPad(nn.Module):
     def __init__(self):
         super(MaxPoolPad, self).__init__()
         self.pad = nn.ZeroPad2d((1, 0, 1, 0))
@@ -22,7 +22,6 @@ class MaxPoolPad(nn.Module):
 
 
 class AvgPoolPad(nn.Module):
-
     def __init__(self, stride=2, padding=1):
         super(AvgPoolPad, self).__init__()
         self.pad = nn.ZeroPad2d((1, 0, 1, 0))
@@ -36,7 +35,6 @@ class AvgPoolPad(nn.Module):
 
 
 class SeparableConv2d(nn.Module):
-
     def __init__(self, in_channels, out_channels, dw_kernel, dw_stride, dw_padding, bias=False):
         super(SeparableConv2d, self).__init__()
         self.depthwise_conv2d = nn.Conv2d(in_channels, in_channels, dw_kernel,
@@ -53,7 +51,6 @@ class SeparableConv2d(nn.Module):
 
 
 class BranchSeparables(nn.Module):
-
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, bias=False):
         super(BranchSeparables, self).__init__()
         self.relu = nn.ReLU()
@@ -74,7 +71,6 @@ class BranchSeparables(nn.Module):
 
 
 class BranchSeparablesStem(nn.Module):
-
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, bias=False):
         super(BranchSeparablesStem, self).__init__()
         self.relu = nn.ReLU()
@@ -95,7 +91,6 @@ class BranchSeparablesStem(nn.Module):
 
 
 class BranchSeparablesReduction(BranchSeparables):
-
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, z_padding=1, bias=False):
         BranchSeparables.__init__(self, in_channels, out_channels, kernel_size, stride, padding, bias)
         self.padding = nn.ZeroPad2d((z_padding, 0, z_padding, 0))
@@ -113,7 +108,6 @@ class BranchSeparablesReduction(BranchSeparables):
 
 
 class CellStem0(nn.Module):
-
     def __init__(self):
         super(CellStem0, self).__init__()
         self.conv_1x1 = nn.Sequential()
@@ -357,7 +351,7 @@ class NormalCell(nn.Module):
 class ReductionCell0(nn.Module):
 
     def __init__(self, in_channels_left, out_channels_left, in_channels_right, out_channels_right):
-        super(ReductionCell0, self).__init__() 
+        super(ReductionCell0, self).__init__()
         self.conv_prev_1x1 = nn.Sequential()
         self.conv_prev_1x1.add_module('relu', nn.ReLU())
         self.conv_prev_1x1.add_module('conv', nn.Conv2d(in_channels_left, out_channels_left, 1, stride=1, bias=False))
@@ -483,13 +477,13 @@ class NASNetASmall(nn.Module):
                                 in_channels_right=336, out_channels_right=168)
         self.cell_1 = NormalCell(in_channels_left=336, out_channels_left=168,
                                  in_channels_right=1008, out_channels_right=168)
-        #self.cell_2 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_2 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
-        #self.cell_3 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_3 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
-        #self.cell_4 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_4 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
-        #self.cell_5 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_5 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
 
         self.reduction_cell_0 = ReductionCell0(in_channels_left=1008, out_channels_left=336,
@@ -499,29 +493,29 @@ class NASNetASmall(nn.Module):
                                 in_channels_right=1344, out_channels_right=336)
         self.cell_7 = NormalCell(in_channels_left=1344, out_channels_left=336,
                                  in_channels_right=2016, out_channels_right=336)
-        #self.cell_8 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_8 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                         in_channels_right=2016, out_channels_right=336)
-        #self.cell_9 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_9 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                         in_channels_right=2016, out_channels_right=336)
-        #self.cell_10 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_10 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                          in_channels_right=2016, out_channels_right=336)
-        #self.cell_11 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_11 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                          in_channels_right=2016, out_channels_right=336)
 
-        #self.reduction_cell_1 = ReductionCell1(in_channels_left=2016, out_channels_left=672,
+        # self.reduction_cell_1 = ReductionCell1(in_channels_left=2016, out_channels_left=672,
         #                                       in_channels_right=2016, out_channels_right=672)
 
-        #self.cell_12 = FirstCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_12 = FirstCell(in_channels_left=2016, out_channels_left=336,
         #                         in_channels_right=2688, out_channels_right=672)
-        #self.cell_13 = NormalCell(in_channels_left=2688, out_channels_left=672,
+        # self.cell_13 = NormalCell(in_channels_left=2688, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_14 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_14 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_15 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_15 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_16 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_16 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_17 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_17 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
 
         self.relu = nn.ReLU()
@@ -532,7 +526,7 @@ class NASNetASmall(nn.Module):
             nn.ReLU(inplace=False))
         self.drop1 = nn.Dropout(0.5)
         self.face_feature = nn.Linear(256 * spatial_map[spatial_size] * spatial_map[spatial_size], self.feature_dim)
-        #self.face_feature = nn.Linear(2304, self.feature_dim)
+        # self.face_feature = nn.Linear(2304, self.feature_dim)
         self.drop2 = nn.Dropout(0.5)
 
         for m in self.modules():
@@ -552,28 +546,28 @@ class NASNetASmall(nn.Module):
 
         x_cell_0 = self.cell_0(x_stem_1, x_stem_0)
         x_cell_1 = self.cell_1(x_cell_0, x_stem_1)
-        #x_cell_2 = self.cell_2(x_cell_1, x_cell_0)
-        #x_cell_3 = self.cell_3(x_cell_2, x_cell_1)
-        #x_cell_4 = self.cell_4(x_cell_3, x_cell_2)
-        #x_cell_5 = self.cell_5(x_cell_4, x_cell_3)
+        # x_cell_2 = self.cell_2(x_cell_1, x_cell_0)
+        # x_cell_3 = self.cell_3(x_cell_2, x_cell_1)
+        # x_cell_4 = self.cell_4(x_cell_3, x_cell_2)
+        # x_cell_5 = self.cell_5(x_cell_4, x_cell_3)
 
         x_reduction_cell_0 = self.reduction_cell_0(x_cell_1, x_cell_0)
 
         x_cell_6 = self.cell_6(x_reduction_cell_0, x_cell_1)
         x_cell_7 = self.cell_7(x_cell_6, x_reduction_cell_0)
-        #x_cell_8 = self.cell_8(x_cell_7, x_cell_6)
-        #x_cell_9 = self.cell_9(x_cell_8, x_cell_7)
-        #x_cell_10 = self.cell_10(x_cell_9, x_cell_8)
-        #x_cell_11 = self.cell_11(x_cell_10, x_cell_9)
+        # x_cell_8 = self.cell_8(x_cell_7, x_cell_6)
+        # x_cell_9 = self.cell_9(x_cell_8, x_cell_7)
+        # x_cell_10 = self.cell_10(x_cell_9, x_cell_8)
+        # x_cell_11 = self.cell_11(x_cell_10, x_cell_9)
 
-        #x_reduction_cell_1 = self.reduction_cell_1(x_cell_8, x_cell_7)
+        # x_reduction_cell_1 = self.reduction_cell_1(x_cell_8, x_cell_7)
 
-        #x_cell_12 = self.cell_12(x_reduction_cell_1, x_cell_8)
-        #x_cell_13 = self.cell_13(x_cell_12, x_reduction_cell_1)
-        #x_cell_14 = self.cell_14(x_cell_13, x_cell_12)
-        #x_cell_15 = self.cell_15(x_cell_14, x_cell_13)
-        #x_cell_16 = self.cell_16(x_cell_15, x_cell_14)
-        #x_cell_17 = self.cell_17(x_cell_16, x_cell_15)
+        # x_cell_12 = self.cell_12(x_reduction_cell_1, x_cell_8)
+        # x_cell_13 = self.cell_13(x_cell_12, x_reduction_cell_1)
+        # x_cell_14 = self.cell_14(x_cell_13, x_cell_12)
+        # x_cell_15 = self.cell_15(x_cell_14, x_cell_13)
+        # x_cell_16 = self.cell_16(x_cell_15, x_cell_14)
+        # x_cell_17 = self.cell_17(x_cell_16, x_cell_15)
         return x_cell_7
 
     def forward(self, input):
@@ -589,8 +583,8 @@ class NASNetASmall(nn.Module):
 
         return x
 
-class NASNetASmall2(nn.Module):
 
+class NASNetASmall2(nn.Module):
     def __init__(self, feature_dim):
         super(NASNetASmall2, self).__init__()
         self.feature_dim = feature_dim
@@ -607,13 +601,13 @@ class NASNetASmall2(nn.Module):
                                 in_channels_right=336, out_channels_right=168)
         self.cell_1 = NormalCell(in_channels_left=336, out_channels_left=168,
                                  in_channels_right=1008, out_channels_right=168)
-        #self.cell_2 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_2 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
-        #self.cell_3 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_3 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
-        #self.cell_4 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_4 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
-        #self.cell_5 = NormalCell(in_channels_left=1008, out_channels_left=168,
+        # self.cell_5 = NormalCell(in_channels_left=1008, out_channels_left=168,
         #                         in_channels_right=1008, out_channels_right=168)
 
         self.reduction_cell_0 = ReductionCell0(in_channels_left=1008, out_channels_left=336,
@@ -623,29 +617,29 @@ class NASNetASmall2(nn.Module):
                                 in_channels_right=1344, out_channels_right=336)
         self.cell_7 = NormalCell(in_channels_left=1344, out_channels_left=336,
                                  in_channels_right=2016, out_channels_right=336)
-        #self.cell_8 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_8 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                         in_channels_right=2016, out_channels_right=336)
-        #self.cell_9 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_9 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                         in_channels_right=2016, out_channels_right=336)
-        #self.cell_10 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_10 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                          in_channels_right=2016, out_channels_right=336)
-        #self.cell_11 = NormalCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_11 = NormalCell(in_channels_left=2016, out_channels_left=336,
         #                          in_channels_right=2016, out_channels_right=336)
 
-        #self.reduction_cell_1 = ReductionCell1(in_channels_left=2016, out_channels_left=672,
+        # self.reduction_cell_1 = ReductionCell1(in_channels_left=2016, out_channels_left=672,
         #                                       in_channels_right=2016, out_channels_right=672)
 
-        #self.cell_12 = FirstCell(in_channels_left=2016, out_channels_left=336,
+        # self.cell_12 = FirstCell(in_channels_left=2016, out_channels_left=336,
         #                         in_channels_right=2688, out_channels_right=672)
-        #self.cell_13 = NormalCell(in_channels_left=2688, out_channels_left=672,
+        # self.cell_13 = NormalCell(in_channels_left=2688, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_14 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_14 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_15 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_15 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_16 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_16 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
-        #self.cell_17 = NormalCell(in_channels_left=4032, out_channels_left=672,
+        # self.cell_17 = NormalCell(in_channels_left=4032, out_channels_left=672,
         #                          in_channels_right=4032, out_channels_right=672)
 
         self.relu = nn.ReLU()
@@ -675,28 +669,28 @@ class NASNetASmall2(nn.Module):
 
         x_cell_0 = self.cell_0(x_stem_1, x_stem_0)
         x_cell_1 = self.cell_1(x_cell_0, x_stem_1)
-        #x_cell_2 = self.cell_2(x_cell_1, x_cell_0)
-        #x_cell_3 = self.cell_3(x_cell_2, x_cell_1)
-        #x_cell_4 = self.cell_4(x_cell_3, x_cell_2)
-        #x_cell_5 = self.cell_5(x_cell_4, x_cell_3)
+        # x_cell_2 = self.cell_2(x_cell_1, x_cell_0)
+        # x_cell_3 = self.cell_3(x_cell_2, x_cell_1)
+        # x_cell_4 = self.cell_4(x_cell_3, x_cell_2)
+        # x_cell_5 = self.cell_5(x_cell_4, x_cell_3)
 
         x_reduction_cell_0 = self.reduction_cell_0(x_cell_1, x_cell_0)
 
         x_cell_6 = self.cell_6(x_reduction_cell_0, x_cell_1)
         x_cell_7 = self.cell_7(x_cell_6, x_reduction_cell_0)
-        #x_cell_8 = self.cell_8(x_cell_7, x_cell_6)
-        #x_cell_9 = self.cell_9(x_cell_8, x_cell_7)
-        #x_cell_10 = self.cell_10(x_cell_9, x_cell_8)
-        #x_cell_11 = self.cell_11(x_cell_10, x_cell_9)
+        # x_cell_8 = self.cell_8(x_cell_7, x_cell_6)
+        # x_cell_9 = self.cell_9(x_cell_8, x_cell_7)
+        # x_cell_10 = self.cell_10(x_cell_9, x_cell_8)
+        # x_cell_11 = self.cell_11(x_cell_10, x_cell_9)
 
-        #x_reduction_cell_1 = self.reduction_cell_1(x_cell_8, x_cell_7)
+        # x_reduction_cell_1 = self.reduction_cell_1(x_cell_8, x_cell_7)
 
-        #x_cell_12 = self.cell_12(x_reduction_cell_1, x_cell_8)
-        #x_cell_13 = self.cell_13(x_cell_12, x_reduction_cell_1)
-        #x_cell_14 = self.cell_14(x_cell_13, x_cell_12)
-        #x_cell_15 = self.cell_15(x_cell_14, x_cell_13)
-        #x_cell_16 = self.cell_16(x_cell_15, x_cell_14)
-        #x_cell_17 = self.cell_17(x_cell_16, x_cell_15)
+        # x_cell_12 = self.cell_12(x_reduction_cell_1, x_cell_8)
+        # x_cell_13 = self.cell_13(x_cell_12, x_reduction_cell_1)
+        # x_cell_14 = self.cell_14(x_cell_13, x_cell_12)
+        # x_cell_15 = self.cell_15(x_cell_14, x_cell_13)
+        # x_cell_16 = self.cell_16(x_cell_15, x_cell_14)
+        # x_cell_17 = self.cell_17(x_cell_16, x_cell_15)
         return x_cell_7
 
     def forward(self, input):
@@ -835,17 +829,19 @@ class NASNetALarge(nn.Module):
 
         return x
 
+
 def nasnetalarge(**kwargs):
     model = NASNetALarge(**kwargs)
     return model
+
 
 def nasnetasmall(feature_dim, **kwargs):
     model = NASNetASmall(feature_dim, **kwargs)
     return model
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     model = nasnetasmall(feature_dim=256)
 
-    input = Variable(torch.randn(2,3,224,224))
-    output = model(input, [0,2])
+    input = Variable(torch.randn(2, 3, 224, 224))
+    output = model(input, [0, 2])

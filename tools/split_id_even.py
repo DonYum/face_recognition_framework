@@ -21,7 +21,7 @@ with open(meta_file) as f:
 
 assert len(list_lines) == len(meta_lines)
 
-for l,m in zip(list_lines, meta_lines):
+for l, m in zip(list_lines, meta_lines):
     if m in d:
         d[m].append(l)
     else:

@@ -6,6 +6,7 @@ import mxnet as mx
 import cv2
 from tqdm import tqdm
 
+
 def load_mx_rec(rec_path, save_path, write_img=True):
     if not os.path.isdir(save_path + "/images"):
         os.makedirs(save_path + "images")
@@ -14,7 +15,7 @@ def load_mx_rec(rec_path, save_path, write_img=True):
         os.path.join(rec_path, 'train.idx'),
         os.path.join(rec_path, 'train.rec'), 'r')
     img_info = imgrec.read_idx(0)
-    header,_ = mx.recordio.unpack(img_info)
+    header, _ = mx.recordio.unpack(img_info)
     max_idx = int(header.label[0])
     out_list = []
     for idx in tqdm(range(1, max_idx)):
@@ -32,7 +33,7 @@ def load_mx_rec(rec_path, save_path, write_img=True):
         f.writelines(out_list)
 
 
-def load_bin(path, rootdir, image_size=[112,112]):
+def load_bin(path, rootdir, image_size=[112, 112]):
     if not os.path.isdir(rootdir + "/images"):
         os.makedirs(rootdir + "/images")
     bins, issame_list = pickle.load(open(path, 'rb'), encoding='bytes')
@@ -42,6 +43,7 @@ def load_bin(path, rootdir, image_size=[112,112]):
         img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_RGB2BGR)
         cv2.imwrite("{}/images/{}.jpg".format(rootdir, i), img)
     np.save('{}/issame_list.npy'.format(rootdir), np.array(issame_list))
+
 
 def main():
     parser = argparse.ArgumentParser()

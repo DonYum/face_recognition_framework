@@ -7,6 +7,7 @@ import sys
 import pickle
 from PIL import Image
 
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self, length):
@@ -26,6 +27,7 @@ class AverageMeter(object):
         self.val = self.history[-1]
         self.avg = np.mean(self.history)
 
+
 def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     maxk = max(topk)
@@ -41,13 +43,15 @@ def accuracy(output, target, topk=(1,)):
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
+
 def save_state(state, path, epoch, is_last=False):
     assert path != ''
     if not os.path.isdir(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
     torch.save(state, '{}_{}.pth.tar'.format(path, epoch))
-    #if is_last:
-        #os.system('cp {}_{}.pth.tar {}_last.pth.tar'.format(path, epoch, path))
+    # if is_last:
+    #     os.system('cp {}_{}.pth.tar {}_last.pth.tar'.format(path, epoch, path))
+
 
 def load_state(path, model, optimizer=None):
     if os.path.isfile(path):
@@ -60,6 +64,7 @@ def load_state(path, model, optimizer=None):
             return checkpoint
     else:
         log("=> no checkpoint found at '{}'".format(path))
+
 
 def log(string):
     print(string)
@@ -80,6 +85,7 @@ def bin_loader(path):
     assert len(bins) == 2*len(lbs)
     imgs = [pil_loader(b) for b in bins]
     return imgs, lbs
+
 
 def pil_loader(img_str):
     buff = io.BytesIO(img_str)

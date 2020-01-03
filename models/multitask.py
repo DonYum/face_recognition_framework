@@ -2,6 +2,7 @@ import torch.nn as nn
 from .ext_layers import ArcFullyConnected
 from . import backbones
 
+
 class MultiTaskWithLoss(nn.Module):
     def __init__(self, backbone, num_classes, feature_dim, spatial_size, arc_fc=False, feat_bn=False, s=64, m=0.5, is_pw=True, is_hard=False):
         super(MultiTaskWithLoss, self).__init__()
@@ -33,6 +34,6 @@ class MultiTaskWithLoss(nn.Module):
                 x = [self.fcs[k](feature[slice_idx[k]:slice_idx[k+1], ...]) for k in range(self.num_tasks)]
             else:
                 x = [self.fcs[k](feature[slice_idx[k]:slice_idx[k+1], ...],
-                    target[slice_idx[k]:slice_idx[k+1]]) for k in range(self.num_tasks)]
+                     target[slice_idx[k]:slice_idx[k+1]]) for k in range(self.num_tasks)]
             target_slice = [target[slice_idx[k]:slice_idx[k+1]] for k in range(self.num_tasks)]
             return [self.criterion(xx, tg) for xx, tg in zip(x, target_slice)]

@@ -132,5 +132,5 @@ class DenseNet(nn.Module):
         out = out.view(out.size(0), -1)
         out = self.face_feature(out)
         out = self.drop1(out)
-        
+
         return out

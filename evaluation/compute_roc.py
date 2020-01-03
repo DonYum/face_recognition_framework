@@ -1,13 +1,13 @@
 import numpy as np
 import time
 
+
 def compute_roc_points(labels, scores, fprs, use_sklearn=True):
     tpr_k_score = []
     th_k_score = []
     sp_tpr = 0
     print(labels.shape)
     print(scores.shape)
-
 
     if use_sklearn:
         from sklearn.metrics import roc_curve
@@ -33,7 +33,7 @@ def compute_roc_points(labels, scores, fprs, use_sklearn=True):
     n = labels.size
     fn = cum_pos - sorted_labels
     tp = total_pos - fn
-    fp = np.arange(n,0,-1) - tp
+    fp = np.arange(n, 0, -1) - tp
     t5 = time.time()
 
     tpr = tp/total_pos
@@ -50,9 +50,10 @@ def compute_roc_points(labels, scores, fprs, use_sklearn=True):
     # print("%6f"%tpr[sp_idx])
     return tpr_k_score, th_k_score, tpr[sp_idx]
 
+
 def compute_roc_part(worker_id, feat1, feat2, meta1, meta2, delta, thres, tp, fp, total_pos_neg):
     scores = feat1.dot(feat2.T)
-    labels = (meta1.reshape(-1,1) == meta2.reshape(1,-1)).astype(np.int)
+    labels = (meta1.reshape(-1, 1) == meta2.reshape(1, -1)).astype(np.int)
     if delta != -1:
         indices = np.triu_indices(delta, k=1)
         scores = scores[indices]
@@ -75,7 +76,7 @@ def compute_roc_part(worker_id, feat1, feat2, meta1, meta2, delta, thres, tp, fp
     c_fp = [0]*len(thres)
     start = 0
     for i, th in enumerate(thres):
-        #'Find rightmost value less than or equal to x'
+        # 'Find rightmost value less than or equal to x'
         pos = bisect.bisect_right(sorted_scores, th, start)
         if pos != len(sorted_scores):
             c_tp[i] = tp_tmp[pos]
@@ -87,4 +88,3 @@ def compute_roc_part(worker_id, feat1, feat2, meta1, meta2, delta, thres, tp, fp
     total_pos_neg[worker_id] = np.array([total_pos, n - total_pos])
     tp[worker_id] = c_tp
     fp[worker_id] = c_fp
-
