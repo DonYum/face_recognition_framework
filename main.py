@@ -1,7 +1,3 @@
-import multiprocessing as mp
-if mp.get_start_method(allow_none=True) != 'spawn':
-    mp.set_start_method('spawn', force=True)
-
 import argparse
 import os
 import time
@@ -24,13 +20,21 @@ from datasets import GivenSizeSampler, BinDataset, FileListLabeledDataset, FileL
 from utils import AverageMeter, load_state, save_state, log, normalize, bin_loader
 from evaluation import evaluate, test_megaface
 
-model_names = sorted(name for name in models.backbones.__dict__
-    if name.islower() and not name.startswith("__")
-    and callable(models.backbones.__dict__[name]))
+import multiprocessing as mp
+if mp.get_start_method(allow_none=True) != 'spawn':
+    mp.set_start_method('spawn', force=True)
+
+
+model_names = sorted(
+                    name for name in models.backbones.__dict__
+                        if name.islower() and not name.startswith("__") and callable(models.backbones.__dict__[name])
+                    )
+
 
 class ArgObj(object):
     def __init__(self):
         pass
+
 
 parser = argparse.ArgumentParser(description='Multi-Task Face Recognition Training')
 parser.add_argument('--config', type=str, required=True)
@@ -39,20 +43,20 @@ parser.add_argument('--resume', action='store_true')
 parser.add_argument('--evaluate', action='store_true')
 parser.add_argument('--extract', action='store_true')
 
-def main():
 
-    ## config
+def main():
+    # config
     global args
     args = parser.parse_args()
 
     with open(args.config) as f:
         config = yaml.load(f)
 
-    for k,v in config.items():    
+    for k, v in config.items():
         if isinstance(v, dict):
             argobj = ArgObj()
             setattr(args, k, argobj)
-            for kk,vv in v.items():
+            for kk, vv in v.items():
                 setattr(argobj, kk, vv)
         else:
             setattr(args, k, v)
@@ -107,17 +111,17 @@ def main():
         if args.val.flag:
             for i in range(num_tasks):
                 args.val.batch_size[i] *= args.ngpu
-    
-            #val_dataset = [FaceDataset(args, idx, 'val') for idx in range(num_tasks)]
+
+            # val_dataset = [FaceDataset(args, idx, 'val') for idx in range(num_tasks)]
             val_dataset = [FileListLabeledDataset(
                 args.val.data_list[i], args.val.data_root[i],
                 transforms.Compose([
                     transforms.Resize(args.model.input_size),
                     transforms.ToTensor(),
-                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),]),
+                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]), ]),
                 memcached=args.memcached,
                 memcached_client=args.memcached_client) for idx in range(num_tasks)]
-            
+
             val_longest_size = max([int(np.ceil(len(vd) / float(bs))) for vd, bs in zip(val_dataset, args.val.batch_size)])
             val_sampler = [GivenSizeSampler(vd, total_size=val_longest_size * bs, sequential=True) for vd, bs in zip(val_dataset, args.val.batch_size)]
             val_loader = [DataLoader(
@@ -125,34 +129,45 @@ def main():
                 num_workers=args.workers, pin_memory=False, sampler=val_sampler[k]) for k in range(num_tasks)]
             assert(all([len(val_loader[k]) == len(val_loader[0]) for k in range(num_tasks)]))
 
-    if args.test.flag or args.evaluate: # online or offline evaluate
+    if args.test.flag or args.evaluate:         # online or offline evaluate
         args.test.batch_size *= args.ngpu
         test_dataset = []
         for tb in args.test.benchmark:
             if tb == 'megaface':
-                test_dataset.append(FileListDataset(args.test.megaface_list,
-                    args.test.megaface_root, transforms.Compose([
-                    transforms.Resize(args.model.input_size),
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),])))
+                test_dataset.append(
+                    FileListDataset(
+                        args.test.megaface_list,
+                        args.test.megaface_root, transforms.Compose([
+                            transforms.Resize(args.model.input_size),
+                            transforms.ToTensor(),
+                            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]), ])
+                        )
+                    )
             else:
-                test_dataset.append(BinDataset("{}/{}.bin".format(args.test.test_root, tb),
-                    transforms.Compose([
-                    transforms.Resize(args.model.input_size),
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
-                    ])))
-        test_sampler = [GivenSizeSampler(td,
-            total_size=int(np.ceil(len(td) / float(args.test.batch_size)) * args.test.batch_size),
-            sequential=True, silent=True) for td in test_dataset]
+                test_dataset.append(
+                        BinDataset(
+                                "{}/{}.bin".format(args.test.test_root, tb),
+                                transforms.Compose([
+                                    transforms.Resize(args.model.input_size),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+                            ])
+                        )
+                    )
+        test_sampler = [
+                GivenSizeSampler(
+                    td,
+                    total_size=int(np.ceil(len(td) / float(args.test.batch_size)) * args.test.batch_size),
+                    sequential=True, silent=True) for td in test_dataset
+            ]
         test_loader = [DataLoader(
             td, batch_size=args.test.batch_size, shuffle=False,
             num_workers=args.workers, pin_memory=False, sampler=ts)
             for td, ts in zip(test_dataset, test_sampler)]
 
-    if args.extract: # feature extraction
+    if args.extract:    # feature extraction
         args.extract_info.batch_size *= args.ngpu
-#        extract_dataset = FaceDataset(args, 0, 'extract')
+        # extract_dataset = FaceDataset(args, 0, 'extract')
         extract_dataset = FileListDataset(
             args.extract_info.data_list, args.extract_info.data_root,
             transforms.Compose([
@@ -167,8 +182,7 @@ def main():
             extract_dataset, batch_size=args.extract_info.batch_size, shuffle=False,
             num_workers=args.workers, pin_memory=False, sampler=extract_sampler)
 
-
-    ## create model
+    # create model
     log("Creating model on [{}] gpus: {}".format(args.ngpu, args.gpus))
     if args.evaluate or args.extract:
         args.num_classes = None
@@ -178,12 +192,12 @@ def main():
     model.cuda()
     cudnn.benchmark = True
 
-    ## criterion and optimizer
+    # criterion and optimizer
     optimizer = torch.optim.SGD(model.parameters(), args.train.base_lr,
                                 momentum=args.train.momentum,
                                 weight_decay=args.train.weight_decay)
 
-    ## resume / load model
+    # resume / load model
     start_epoch = 0
     count = [0]
     if args.load_path:
@@ -195,7 +209,7 @@ def main():
         else:
             load_state(args.load_path, model)
 
-    ## offline evaluate
+    # offline evaluate
     if args.evaluate:
         for tb, tl, td in zip(args.test.benchmark, test_loader, test_dataset):
             evaluation(tl, model, num=len(td),
@@ -203,27 +217,27 @@ def main():
                        benchmark=tb)
         return
 
-    ## feature extraction
+    # feature extraction
     if args.extract:
         extract(extract_loader, model, num=len(extract_dataset), output_file="{}_{}.bin".format(args.load_path[:-8], args.extract_info.data_name))
         return
 
     ######################## train #################
-    ## lr scheduler
+    # lr scheduler
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, args.train.lr_decay_steps, gamma=args.train.lr_decay_scale, last_epoch=start_epoch-1)
 
-    ## logger
+    # logger
     logging.basicConfig(filename=os.path.join('{}/logs'.format(args.save_path), 'log-{}-{:02d}-{:02d}_{:02d}:{:02d}:{:02d}.txt'.format(
         datetime.today().year, datetime.today().month, datetime.today().day,
         datetime.today().hour, datetime.today().minute, datetime.today().second)),
         level=logging.INFO)
     tb_logger = SummaryWriter('{}/events'.format(args.save_path))
 
-    ## initial validate
+    # initial validate
     if args.val.flag:
         validate(val_loader, model, start_epoch, args.train.loss_weight, len(train_loader[0]), tb_logger)
 
-    ## initial evaluate
+    # initial evaluate
     if args.test.flag and args.test.initial_test:
         log("*************** evaluation epoch [{}] ***************".format(start_epoch))
         for tb, tl, td in zip(args.test.benchmark, test_loader, test_dataset):
@@ -233,7 +247,7 @@ def main():
                              benchmark=tb)
             tb_logger.add_scalar(tb, res, start_epoch)
 
-    ## training loop
+    # training loop
     for epoch in range(start_epoch, args.train.max_epoch):
         lr_scheduler.step()
         for ts in train_sampler:
@@ -321,15 +335,14 @@ def train(train_loader, model, optimizer, epoch, loss_weight, tb_logger, count):
                   'Lr: {4:.2g}    '
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})    '
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})'.format(
-                   epoch, i, len(train_loader[0]), count[0], 
+                   epoch, i, len(train_loader[0]), count[0],
                    optimizer.param_groups[0]['lr'],
                    batch_time=batch_time,
                    data_time=data_time))
             for k in range(num_tasks):
                 log('Task: #{0}\t'
-                      'LW: {1:.2g}\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
-                       k, loss_weight[k], loss=losses[k]))
+                    'LW: {1:.2g}\t'
+                    'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(k, loss_weight[k], loss=losses[k]))
 
         # tensorboard logger
         for k in range(num_tasks):
@@ -337,6 +350,7 @@ def train(train_loader, model, optimizer, epoch, loss_weight, tb_logger, count):
         tb_logger.add_scalar('lr', optimizer.param_groups[0]['lr'], count[0])
 
         count[0] += 1
+
 
 def validate(val_loader, model, criterion, epoch, loss_weight, train_len, tb_logger, count):
     raise NotImplemented
@@ -375,6 +389,7 @@ def validate(val_loader, model, criterion, epoch, loss_weight, train_len, tb_log
     for k in range(num_tasks):
         tb_logger.add_scalar('val_loss_{}'.format(k), losses[k].val, count[0])
 
+
 def extract(ext_loader, model, num, output_file, silent=False):
     batch_time = AverageMeter(9999999)
     data_time = AverageMeter(9999999)
@@ -393,15 +408,15 @@ def extract(ext_loader, model, num, output_file, silent=False):
 
         if i % args.train.print_freq == 0 and not silent:
             log("Extracting: {0}/{1}\t"
-                    "Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t"
-                    "Data {data_time.val:.3f} ({data_time.avg:.3f})".format(
-                    i, len(ext_loader), batch_time=batch_time, data_time=data_time))
+                "Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t"
+                "Data {data_time.val:.3f} ({data_time.avg:.3f})".format(i, len(ext_loader), batch_time=batch_time, data_time=data_time))
 
     features = np.concatenate(features, axis=0)[:num, :]
     features.tofile(output_file)
     if not silent:
         log("Extracting Done. Total time: {}".format(time.time() - start))
     return features
+
 
 def evaluation(test_loader, model, num, outfeat_fn, benchmark):
     load_feat = True
@@ -420,19 +435,19 @@ def evaluation(test_loader, model, num, outfeat_fn, benchmark):
         _, lbs = bin_loader("{}/{}.bin".format(args.test.test_root, benchmark))
         _, _, acc, val, val_std, far = evaluate(
             features, lbs, nrof_folds=args.test.nfolds, distance_metric=0)
-    
+
         log(" * {}: accuracy: {:.4f}({:.4f})".format(benchmark, acc.mean(), acc.std()))
         return acc.mean()
 
 
-#def evaluation_old(test_loader, model, num, outfeat_fn, benchmark):
+# def evaluation_old(test_loader, model, num, outfeat_fn, benchmark):
 #    load_feat = False
 #    if not os.path.isfile(outfeat_fn) or not load_feat:
 #        features = extract(test_loader, model, num, outfeat_fn)
 #    else:
 #        log("Loading features: {}".format(outfeat_fn))
 #        features = np.fromfile(outfeat_fn, dtype=np.float32).reshape(-1, args.model.feature_dim)
-#
+
 #    if benchmark == "megaface":
 #        r = test.test_megaface(features)
 #        log(' * Megaface: 1e-6 [{}], 1e-5 [{}], 1e-4 [{}]'.format(r[-1], r[-2], r[-3]))
